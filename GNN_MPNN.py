@@ -51,6 +51,8 @@ class MPNN(nn.Module):
         if pre_node is None:
             pre_node = x
         
+        res = self.residual_project(pre_node)
+
         h_i = pre_node[edge_index[0]]
         h_j = pre_node[edge_index[1]]
         h_edge = self.f_edge(torch.cat([h_i, h_j, edge_attr], dim=-1))
@@ -58,8 +60,7 @@ class MPNN(nn.Module):
         h_msg = scatter_sum(h_edge, edge_index[1], dim=0, dim_size= x.size(0))
 
         h_node = self.f_node(torch.cat([pre_node, h_msg, x], dim=-1))
-
-        res = self.residual_project(pre_node)
+        
         out = self.norm(res+self.dropout(h_node))
         return out
 
