@@ -1,4 +1,7 @@
-class MPNNLayer(MessagePassing):
+import torch
+import torch.nn as nn
+
+class MPNNLayer(nn.Module):#MessagePassing
     def __init__(self, emb_dim=64, edge_dim=4, aggr='add'):
         super().__init__(aggr=aggr)
     
@@ -77,16 +80,13 @@ class MPNNModel(nn.Module):
 
 # our prediction model here 
 class Net(nn.Module):
-    def __init__(self, ):
+    def __init__(self, node_dim=11, edge_dim=4, graph_dim=96):
         super().__init__()
     
         self.output_type = ['infer', 'loss']
     
-        graph_dim=96
-        input_dim = 11
-        edge_dim = 4
         self.smile_encoder = MPNNModel(
-            num_layers=4, input_dim=input_dim, edge_dim=edge_dim, emb_dim=graph_dim,
+            num_layers=4, input_dim=node_dim, edge_dim=edge_dim, emb_dim=graph_dim,
         )
         self.bind = nn.Sequential(
             nn.Linear(graph_dim, 1024),
