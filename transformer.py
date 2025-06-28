@@ -156,11 +156,12 @@ class Decoder(nn.Module):
         return x
 
 class Transformer(nn.Module):
-    def __init__(self):
+    def __init__(self, src_vocab_size, tgt_vocab_size, d_model=512, num_layers=6,
+                 num_heads=8, d_ff=2048, max_len=5000):
         super().__init__()
-        self.encoder = Encoder
-        self.decoder = Decoder
-        self.out = nn.Linear
+        self.encoder = Encoder(src_vocab_size, d_model, num_layers, num_heads, d_ff, max_len)
+        self.decoder = Decoder(tgt_vocab_size, d_model, num_layers, num_heads, d_ff, max_len)
+        self.out = nn.Linear(d_model, tgt_vocab_size)
 
     def forward(self, src, tgt, src_mask=None, tgt_mask=None):
         encode_out = self.encoder(src, src_mask)
