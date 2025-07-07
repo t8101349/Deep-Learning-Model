@@ -122,4 +122,29 @@ class GraphormerModel(nn.Module):
         self.pool = nn.AdaptiveAvgPool1d(1)
         self.pred_head = nn.Linear(hidden_dim, 1)
     
-    def forward(self, node_feat, edge_dist):
+    
+    def forward(self, node_feat, edge_dist, edge_type=None):
+        """
+        node_feat: [B, N, F] 節點特徵
+        edge_dist: [B, N, N] 節點對距離 (離散)
+        edge_type: [B, N, N] 邊類型 ID (可選)
+        """
+        x = self.node_feat_emb(node_feat)  # [B, N, D]
+
+        spatial_bias = self.edge_emb(edge_dist)  # [B, N, N, H]
+        if edge_type is not None:
+            edge_type_bias = self.edge_feat_emb(edge_type)  # [B, N, N, H]
+            attn_bias = spatial_bias + edge_type_bias
+        else:
+            attn_bias = spatial_bias  # 單純使用圖距離資訊
+
+        attn_bias = attn_bias.mean(dim=-1)  # → [B, N, N] over heads
+
+        x = self.encoder(x, attn_bias=attn_bias)  # [B, N, D]
+
+        # graph-level pooling
+        x = x.transpose(1, 2)           # [B, D, N]
+        x = self.pool(x).squeeze(-1)    # [B, D]
+        out = self.pred_head(x)         # [B, 1]
+
+        return out
